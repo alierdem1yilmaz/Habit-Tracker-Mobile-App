@@ -21,7 +21,7 @@ export function GoalCard({ goal, now, onComplete, onUndo, onEdit, onDelete }: Go
   const overdue = isOverdue(goal, now);
   const completed = goal.status === 'completed';
 
-  const accentColor = completed ? theme.success : overdue ? theme.danger : theme.tint;
+  const accentColor = completed ? theme.success : overdue ? theme.danger : theme.primary;
 
   return (
     <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border, borderLeftColor: accentColor }]}>
@@ -29,12 +29,12 @@ export function GoalCard({ goal, now, onComplete, onUndo, onEdit, onDelete }: Go
         <Pressable
           onPress={completed ? onUndo : onComplete}
           hitSlop={8}
-          style={styles.checkButton}
+          style={({ pressed }) => [styles.checkButton, { opacity: pressed ? 0.6 : 1 }]}
           accessibilityLabel={completed ? 'Geri al' : 'Tamamlandı olarak işaretle'}>
           <IconSymbol
             name={completed ? 'checkmark.circle.fill' : 'circle'}
             size={26}
-            color={completed ? theme.success : theme.muted}
+            color={completed ? theme.success : theme.primary}
           />
         </Pressable>
 
@@ -70,10 +70,18 @@ export function GoalCard({ goal, now, onComplete, onUndo, onEdit, onDelete }: Go
         </View>
 
         <View style={styles.actions}>
-          <Pressable onPress={onEdit} hitSlop={8} style={styles.actionButton} accessibilityLabel="Düzenle">
+          <Pressable
+            onPress={onEdit}
+            hitSlop={8}
+            style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.5 : 1 }]}
+            accessibilityLabel="Düzenle">
             <IconSymbol name="pencil" size={18} color={theme.muted} />
           </Pressable>
-          <Pressable onPress={onDelete} hitSlop={8} style={styles.actionButton} accessibilityLabel="Sil">
+          <Pressable
+            onPress={onDelete}
+            hitSlop={8}
+            style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.5 : 1 }]}
+            accessibilityLabel="Sil">
             <IconSymbol name="trash" size={18} color={theme.danger} />
           </Pressable>
         </View>

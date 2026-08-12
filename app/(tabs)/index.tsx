@@ -73,15 +73,16 @@ export default function GoalsScreen() {
             <Pressable
               key={f.key}
               onPress={() => setFilter(f.key)}
-              style={[
+              style={({ pressed }) => [
                 styles.filterChip,
                 {
-                  backgroundColor: isSelected ? theme.tint : theme.card,
-                  borderColor: isSelected ? theme.tint : theme.border,
+                  backgroundColor: isSelected ? theme.primary : theme.card,
+                  borderColor: isSelected ? theme.primary : theme.border,
+                  opacity: pressed ? 0.75 : 1,
                 },
               ]}>
               <ThemedText
-                style={[styles.filterLabel, { color: isSelected ? '#fff' : theme.text }]}
+                style={[styles.filterLabel, { color: isSelected ? theme.onPrimary : theme.text }]}
                 type="defaultSemiBold">
                 {f.label} ({count})
               </ThemedText>
@@ -117,7 +118,7 @@ export default function GoalsScreen() {
             }
             message={
               filter === 'active'
-                ? 'Aşağıdaki + butonuyla ilk hedefini oluştur.'
+                ? 'Aşağıdaki "Yeni Hedef" butonuyla ilk hedefini oluştur.'
                 : filter === 'overdue'
                   ? 'Bitiş tarihi geçmiş hedeflerin burada görünür.'
                   : 'Tamamladığın hedefler burada listelenir.'
@@ -128,9 +129,15 @@ export default function GoalsScreen() {
 
       <Pressable
         onPress={() => router.push('/goal-form')}
-        style={[styles.fab, { backgroundColor: theme.tint }]}
+        style={({ pressed }) => [
+          styles.fab,
+          { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+        ]}
         accessibilityLabel="Yeni hedef ekle">
-        <IconSymbol name="plus" size={26} color="#fff" />
+        <IconSymbol name="plus" size={22} color={theme.onPrimary} />
+        <ThemedText type="defaultSemiBold" style={{ color: theme.onPrimary }}>
+          Yeni Hedef
+        </ThemedText>
       </Pressable>
     </SafeAreaView>
   );
@@ -172,14 +179,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 999,
     shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },

@@ -99,7 +99,7 @@ export default function StatsScreen() {
             Hedef Özeti
           </ThemedText>
           <View style={styles.countRow}>
-            <CountItem label="Aktif" value={counts.active} color={theme.tint} />
+            <CountItem label="Aktif" value={counts.active} color={theme.primary} />
             <CountItem label="Gecikmiş" value={counts.overdue} color={theme.danger} />
             <CountItem label="Tamamlandı" value={counts.completed} color={theme.success} />
           </View>

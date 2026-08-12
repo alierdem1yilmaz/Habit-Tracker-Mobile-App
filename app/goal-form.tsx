@@ -136,7 +136,14 @@ export default function GoalFormScreen() {
           <ThemedText type="defaultSemiBold">Bitiş Tarihi *</ThemedText>
           <Pressable
             onPress={handleDeadlinePress}
-            style={[styles.input, { borderColor: deadlineError ? theme.danger : theme.border, backgroundColor: theme.card }]}>
+            style={({ pressed }) => [
+              styles.input,
+              {
+                borderColor: deadlineError ? theme.danger : theme.border,
+                backgroundColor: theme.card,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}>
             <ThemedText>
               {deadline.toLocaleString('tr-TR', {
                 day: 'numeric',
@@ -170,14 +177,15 @@ export default function GoalFormScreen() {
                 <Pressable
                   key={String(option.value)}
                   onPress={() => setReminderDaysBefore(option.value as ReminderDaysBefore | null)}
-                  style={[
+                  style={({ pressed }) => [
                     styles.chip,
                     {
-                      backgroundColor: isSelected ? theme.tint : theme.card,
-                      borderColor: isSelected ? theme.tint : theme.border,
+                      backgroundColor: isSelected ? theme.primary : theme.card,
+                      borderColor: isSelected ? theme.primary : theme.border,
+                      opacity: pressed ? 0.75 : 1,
                     },
                   ]}>
-                  <ThemedText style={{ color: isSelected ? '#fff' : theme.text, fontSize: 13 }}>
+                  <ThemedText style={{ color: isSelected ? theme.onPrimary : theme.text, fontSize: 13 }}>
                     {option.label}
                   </ThemedText>
                 </Pressable>
@@ -197,8 +205,11 @@ export default function GoalFormScreen() {
         <Pressable
           onPress={handleSave}
           disabled={saving}
-          style={[styles.saveButton, { backgroundColor: theme.tint, opacity: saving ? 0.6 : 1 }]}>
-          <ThemedText type="defaultSemiBold" style={{ color: '#fff' }}>
+          style={({ pressed }) => [
+            styles.saveButton,
+            { backgroundColor: theme.primary, opacity: saving ? 0.6 : pressed ? 0.85 : 1 },
+          ]}>
+          <ThemedText type="defaultSemiBold" style={{ color: theme.onPrimary }}>
             {isEdit ? 'Kaydet' : 'Hedefi Oluştur'}
           </ThemedText>
         </Pressable>

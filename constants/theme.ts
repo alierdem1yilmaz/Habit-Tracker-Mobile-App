@@ -22,6 +22,8 @@ export const Colors = {
     success: '#1E9E5A',
     danger: '#E0483F',
     warning: '#C9860B',
+    primary: '#7A1F31',
+    onPrimary: '#FFFFFF',
   },
   dark: {
     text: '#ECEDEE',
@@ -36,6 +38,8 @@ export const Colors = {
     success: '#3FCC7E',
     danger: '#FF6B61',
     warning: '#E5A93B',
+    primary: '#C24A63',
+    onPrimary: '#FFFFFF',
   },
 };
 
