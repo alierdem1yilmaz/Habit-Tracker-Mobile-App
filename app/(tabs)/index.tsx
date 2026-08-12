@@ -1,98 +1,186 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { EmptyState } from '@/components/empty-state';
+import { GoalCard } from '@/components/goal-card';
+import { StreakBadge } from '@/components/streak-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useGoals } from '@/context/goals-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { isOverdue } from '@/lib/goal-utils';
+import type { Goal } from '@/types/goal';
 
-export default function HomeScreen() {
+type Filter = 'active' | 'overdue' | 'completed';
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'active', label: 'Aktif' },
+  { key: 'overdue', label: 'Gecikmiş' },
+  { key: 'completed', label: 'Tamamlandı' },
+];
+
+export default function GoalsScreen() {
+  const theme = Colors[useColorScheme() ?? 'light'];
+  const router = useRouter();
+  const { goals, streak, now, completeGoal, undoComplete, deleteGoal } = useGoals();
+  const [filter, setFilter] = useState<Filter>('active');
+
+  const grouped = useMemo(() => {
+    const active: Goal[] = [];
+    const overdue: Goal[] = [];
+    const completed: Goal[] = [];
+    for (const goal of goals) {
+      if (goal.status === 'completed') completed.push(goal);
+      else if (isOverdue(goal, now)) overdue.push(goal);
+      else active.push(goal);
+    }
+    active.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+    overdue.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+    completed.sort((a, b) => new Date(b.completedAt ?? 0).getTime() - new Date(a.completedAt ?? 0).getTime());
+    return { active, overdue, completed };
+  }, [goals, now]);
+
+  const visibleGoals = grouped[filter];
+
+  const handleDelete = (goal: Goal) => {
+    Alert.alert('Hedefi sil', `"${goal.title}" silinsin mi? Bu işlem geri alınamaz.`, [
+      { text: 'Vazgeç', style: 'cancel' },
+      { text: 'Sil', style: 'destructive', onPress: () => deleteGoal(goal.id) },
+    ]);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
+      <ThemedView style={styles.header}>
+        <View>
+          <ThemedText type="title">Hedeflerim</ThemedText>
+          <ThemedText style={{ color: theme.muted }}>
+            {goals.filter((g) => g.status === 'active').length} aktif hedef
+          </ThemedText>
+        </View>
+        <StreakBadge streak={streak.currentStreak} />
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={styles.filterRow}>
+        {FILTERS.map((f) => {
+          const count = grouped[f.key].length;
+          const isSelected = filter === f.key;
+          return (
+            <Pressable
+              key={f.key}
+              onPress={() => setFilter(f.key)}
+              style={[
+                styles.filterChip,
+                {
+                  backgroundColor: isSelected ? theme.tint : theme.card,
+                  borderColor: isSelected ? theme.tint : theme.border,
+                },
+              ]}>
+              <ThemedText
+                style={[styles.filterLabel, { color: isSelected ? '#fff' : theme.text }]}
+                type="defaultSemiBold">
+                {f.label} ({count})
+              </ThemedText>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <FlatList
+        data={visibleGoals}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <GoalCard
+            goal={item}
+            now={now}
+            onComplete={() => completeGoal(item.id)}
+            onUndo={() => undoComplete(item.id)}
+            onEdit={() => router.push({ pathname: '/goal-form', params: { id: item.id } })}
+            onDelete={() => handleDelete(item)}
+          />
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ListEmptyComponent={
+          <EmptyState
+            icon={filter === 'completed' ? 'checkmark.circle.fill' : 'checklist'}
+            title={
+              filter === 'active'
+                ? 'Henüz aktif hedefin yok'
+                : filter === 'overdue'
+                  ? 'Gecikmiş hedefin yok'
+                  : 'Henüz tamamlanan hedef yok'
+            }
+            message={
+              filter === 'active'
+                ? 'Aşağıdaki + butonuyla ilk hedefini oluştur.'
+                : filter === 'overdue'
+                  ? 'Bitiş tarihi geçmiş hedeflerin burada görünür.'
+                  : 'Tamamladığın hedefler burada listelenir.'
+            }
+          />
+        }
+      />
+
+      <Pressable
+        onPress={() => router.push('/goal-form')}
+        style={[styles.fab, { backgroundColor: theme.tint }]}
+        accessibilityLabel="Yeni hedef ekle">
+        <IconSymbol name="plus" size={26} color="#fff" />
+      </Pressable>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  safeArea: {
+    flex: 1,
+  },
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
-  stepContainer: {
+  filterRow: {
+    flexDirection: 'row',
     gap: 8,
-    marginBottom: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  filterLabel: {
+    fontSize: 13,
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+    flexGrow: 1,
+  },
+  fab: {
     position: 'absolute',
+    right: 20,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
 });
