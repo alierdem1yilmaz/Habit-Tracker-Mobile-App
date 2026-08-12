@@ -1,50 +1,105 @@
-# Welcome to your Expo app 👋
+# Habit Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native + Expo mobile app for tracking personal goals: unlimited goals
+with deadlines and local reminder notifications, plus a daily completion
+streak. Fully local-first — no backend, no login, all data persisted on
+the device with AsyncStorage.
 
-## Get started
+Built for Exposure AI Academy · Project 9.
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+- **Goal management** — create, edit, delete, and complete goals with an
+  undo option. Goals are grouped into Active, Overdue, and Completed views.
+- **Deadline reminders** — schedule a local device notification a chosen
+  number of days before each goal's deadline, via `expo-notifications`.
+  Notifications are automatically rescheduled on edit and cancelled on
+  delete/complete.
+- **Daily streak** — current and best streak are computed from goal
+  completion dates; completing at least one goal keeps the streak alive,
+  a full day with no completions breaks it.
+- **Persistence** — goals, notification IDs, and streak data are stored in
+  AsyncStorage and survive app restarts.
 
-2. Start the app
+## Tech stack
 
-   ```bash
-   npx expo start
-   ```
+| Part | Package |
+| --- | --- |
+| Framework | React Native + Expo (SDK 54) |
+| Navigation | Expo Router |
+| Data | `@react-native-async-storage/async-storage` |
+| Notifications | `expo-notifications` (local scheduled notifications) |
+| Date/time picker | `@react-native-community/datetimepicker` |
 
-In the output, you'll find options to open the app in a
+## Project structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app/                  Expo Router screens (tabs, goal-form modal)
+components/           Reusable UI (goal-card, streak-badge, ...)
+context/              GoalsProvider — shared goal/streak state + mutators
+lib/                  Pure logic: storage, streak calculation, notifications, formatting
+types/                Shared TypeScript types
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Setup
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Run (Expo Go)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start --tunnel
+```
 
-## Join the community
+Scan the QR code with the Expo Go app (iOS: Camera app or Expo Go; Android:
+Expo Go's "Scan QR Code"). `--tunnel` is needed on networks with client
+isolation (e.g. most school/corporate Wi-Fi); use plain `npx expo start` if
+your phone and computer are on the same open LAN.
 
-Join our community of developers creating universal apps.
+## Local development build
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Only needed if you add a package with native code — everyday JS/TS/style
+changes don't require a rebuild, `npx expo start` is enough.
+
+```bash
+npx expo install expo-dev-client
+
+# iOS (requires macOS + Xcode)
+npx expo run:ios
+
+# Android (requires Android Studio / SDK)
+npx expo run:android
+```
+
+## EAS Build
+
+```bash
+npm install -g eas-cli
+eas login
+eas build:configure
+
+# Android preview build (installable APK)
+eas build --profile preview --platform android
+
+# iOS preview build (requires a paid Apple Developer account for a
+# physical-device build; an Expo Go demo is used otherwise)
+eas build --profile preview --platform ios
+```
+
+## Testing checklist
+
+- Create a goal with a deadline ~2 minutes out and a reminder set to fire
+  immediately — confirm the notification permission prompt and that the
+  notification actually arrives.
+- Edit a goal's deadline — confirm the old reminder is cancelled and a new
+  one is scheduled (no duplicates).
+- Complete a goal, then undo — confirm it moves between Completed/Active
+  and the streak updates correctly both ways.
+- Delete a goal — confirm the confirmation dialog and that its reminder is
+  cancelled.
+- Force-quit and reopen the app — confirm goals, streak, and completed
+  state are all restored.
+- Let an active goal's deadline pass without completing it — confirm it
+  moves into the Overdue tab.
